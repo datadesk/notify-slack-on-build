@@ -9492,25 +9492,26 @@ var github = __webpack_require__(469);
 var dist = __webpack_require__(114);
 
 // CONCATENATED MODULE: ./src/prepare-blocks.ts
-function prepareBlocks({ branch, checkUrl, owner, previewUrl, repo, repoUrl, status, }) {
+function prepareBlocks({ actor, branch, checkUrl, owner, previewUrl, repo, repoUrl, sha, shaUrl, status, }) {
     let text;
     let url;
     let buttonText;
     let style;
     switch (status) {
         case 'in_progress':
-            text = ':construction: This branch is now building and deploying.';
+            text = ':construction: This commit is now building and deploying.';
             url = checkUrl;
             buttonText = 'View build progress';
             break;
         case 'error':
-            text = ':no_entry: Something went wrong and this build failed.';
+            text = ":no_entry: Something went wrong and this commit's build failed.";
             url = checkUrl;
             buttonText = 'View build logs';
             style = 'danger';
             break;
         case 'success':
-            text = ':white_check_mark: The build and deploy was successful!';
+            text =
+                ":white_check_mark: This commit's build and deploy was successful!";
             url = previewUrl;
             buttonText = 'Open preview';
             style = 'primary';
@@ -9537,6 +9538,14 @@ function prepareBlocks({ branch, checkUrl, owner, previewUrl, repo, repoUrl, sta
                     type: 'mrkdwn',
                     text: `*Branch*\n${branch}`,
                 },
+                {
+                    type: 'mrkdwn',
+                    text: `*Commit*\n<${shaUrl}|\`${sha.slice(0, 8)}\`>`,
+                },
+                {
+                    type: 'mrkdwn',
+                    text: `*User*\n${actor}`,
+                },
             ],
             accessory,
         },
@@ -9553,7 +9562,7 @@ function prepareBlocks({ branch, checkUrl, owner, previewUrl, repo, repoUrl, sta
 async function run() {
     try {
         // The commit SHA that triggered this run
-        const { ref, sha } = github.context;
+        const { actor, ref, sha } = github.context;
         // The owner and repo names of this repository
         const { owner, repo } = github.context.repo;
         // the URL of the repo
@@ -9576,12 +9585,15 @@ async function run() {
         // whether this is an update run or not
         const isUpdate = Boolean(messageId);
         const blocks = prepareBlocks({
+            actor,
             branch,
             checkUrl,
             owner,
             previewUrl,
             repo,
             repoUrl,
+            sha,
+            shaUrl,
             status,
         });
         // the notification/fallback text

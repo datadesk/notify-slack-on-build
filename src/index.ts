@@ -16,7 +16,7 @@ export type BuildStatus = 'in_progress' | 'error' | 'success';
 async function run() {
   try {
     // The commit SHA that triggered this run
-    const { ref, sha } = context;
+    const { actor, ref, sha } = context;
 
     // The owner and repo names of this repository
     const { owner, repo } = context.repo;
@@ -48,12 +48,15 @@ async function run() {
     const isUpdate = Boolean(messageId);
 
     const blocks = prepareBlocks({
+      actor,
       branch,
       checkUrl,
       owner,
       previewUrl,
       repo,
       repoUrl,
+      sha,
+      shaUrl,
       status,
     });
 
