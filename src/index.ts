@@ -13,7 +13,7 @@ import { prepareBlocks } from './prepare-blocks';
 
 // types
 import type { InputOptions } from '@actions/core';
-export type BuildStatus = 'in_progress' | 'error' | 'success';
+export type BuildStatus = 'in_progress' | 'failure' | 'success';
 
 function getInputAsArray(name: string, options?: InputOptions): string[] {
   return getInput(name, options)
@@ -46,6 +46,9 @@ async function run() {
     // pull branch name off the ref
     const parts = ref.split('/');
     const branch = parts[parts.length - 1];
+
+    // build the URL directly to the branch
+    const branchUrl = `${repoUrl}/tree/${branch}`;
 
     // Inputs
     const token = getInput('slack-token', { required: true });
@@ -82,6 +85,7 @@ async function run() {
       const blocks = prepareBlocks({
         actor,
         branch,
+        branchUrl,
         checkUrl,
         owner,
         previewUrl,

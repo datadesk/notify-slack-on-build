@@ -5,6 +5,7 @@ import type { BuildStatus } from './index';
 export function prepareBlocks({
   actor,
   branch,
+  branchUrl,
   checkUrl,
   owner,
   previewUrl,
@@ -16,6 +17,7 @@ export function prepareBlocks({
 }: {
   actor: string;
   branch: string;
+  branchUrl: string;
   checkUrl: string;
   owner: string;
   previewUrl: string;
@@ -34,12 +36,13 @@ export function prepareBlocks({
     case 'in_progress':
       text = ':construction: This commit is now building and deploying.';
       url = checkUrl;
-      buttonText = 'View build progress';
+      buttonText = 'View progress';
       break;
-    case 'error':
-      text = ":no_entry: Something went wrong and this commit's build failed.";
+    case 'failure':
+      text =
+        ":no_entry: Something went wrong and this commit's build or deploy failed.";
       url = checkUrl;
-      buttonText = 'View build logs';
+      buttonText = 'View log';
       style = 'danger';
       break;
     case 'success':
@@ -72,7 +75,7 @@ export function prepareBlocks({
         { type: 'mrkdwn', text: `*Repo*\n<${repoUrl}|${owner}/${repo}>` },
         {
           type: 'mrkdwn',
-          text: `*Branch*\n${branch}`,
+          text: `*Branch*\n<${branchUrl}|\`${branch}\`>`,
         },
         {
           type: 'mrkdwn',

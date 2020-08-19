@@ -8267,7 +8267,7 @@ async function findChannelIds({ channelName, slack, }) {
 }
 
 // CONCATENATED MODULE: ./src/prepare-blocks.ts
-function prepareBlocks({ actor, branch, checkUrl, owner, previewUrl, repo, repoUrl, sha, shaUrl, status, }) {
+function prepareBlocks({ actor, branch, branchUrl, checkUrl, owner, previewUrl, repo, repoUrl, sha, shaUrl, status, }) {
     let text;
     let url;
     let buttonText;
@@ -8276,12 +8276,13 @@ function prepareBlocks({ actor, branch, checkUrl, owner, previewUrl, repo, repoU
         case 'in_progress':
             text = ':construction: This commit is now building and deploying.';
             url = checkUrl;
-            buttonText = 'View build progress';
+            buttonText = 'View progress';
             break;
-        case 'error':
-            text = ":no_entry: Something went wrong and this commit's build failed.";
+        case 'failure':
+            text =
+                ":no_entry: Something went wrong and this commit's build or deploy failed.";
             url = checkUrl;
-            buttonText = 'View build logs';
+            buttonText = 'View log';
             style = 'danger';
             break;
         case 'success':
@@ -8311,7 +8312,7 @@ function prepareBlocks({ actor, branch, checkUrl, owner, previewUrl, repo, repoU
                 { type: 'mrkdwn', text: `*Repo*\n<${repoUrl}|${owner}/${repo}>` },
                 {
                     type: 'mrkdwn',
-                    text: `*Branch*\n${branch}`,
+                    text: `*Branch*\n<${branchUrl}|\`${branch}\`>`,
                 },
                 {
                     type: 'mrkdwn',
@@ -8359,6 +8360,8 @@ async function run() {
         // pull branch name off the ref
         const parts = ref.split('/');
         const branch = parts[parts.length - 1];
+        // build the URL directly to the branch
+        const branchUrl = `${repoUrl}/tree/${branch}`;
         // Inputs
         const token = Object(core.getInput)('slack-token', { required: true });
         const channelName = getInputAsArray('channel-name', { required: false });
@@ -8384,6 +8387,7 @@ async function run() {
             const blocks = prepareBlocks({
                 actor,
                 branch,
+                branchUrl,
                 checkUrl,
                 owner,
                 previewUrl,
