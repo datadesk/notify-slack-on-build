@@ -72,6 +72,7 @@ async function run() {
 
     if (isUpdate) {
       payload.ts = messageId;
+      payload.as_user = true;
       response = await slack.chat.update(payload as ChatUpdateArguments);
     } else {
       response = await slack.chat.postMessage(

@@ -9594,6 +9594,7 @@ async function run() {
         let response;
         if (isUpdate) {
             payload.ts = messageId;
+            payload.as_user = true;
             response = await slack.chat.update(payload);
         }
         else {
