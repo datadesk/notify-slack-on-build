@@ -8369,11 +8369,11 @@ async function run() {
         // the authenticated Slack client
         const slack = new dist.WebClient(token);
         // determine whether we're using channel-id
-        const channels = channelId.length > 1
+        const channels = channelId.length > 0
             ? channelId
             : await findChannelIds({ channelName, slack });
         // whether this is an update run or not
-        const isUpdate = messageId.length > 1;
+        const isUpdate = messageId.length > 0;
         if (isUpdate && channels.length !== messageId.length) {
             throw new Error('There must be the same number of channel IDs and message IDs during an update run.');
         }

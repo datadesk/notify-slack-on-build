@@ -60,12 +60,12 @@ async function run() {
 
     // determine whether we're using channel-id
     const channels =
-      channelId.length > 1
+      channelId.length > 0
         ? channelId
         : await findChannelIds({ channelName, slack });
 
     // whether this is an update run or not
-    const isUpdate = messageId.length > 1;
+    const isUpdate = messageId.length > 0;
 
     if (isUpdate && channels.length !== messageId.length) {
       throw new Error(
