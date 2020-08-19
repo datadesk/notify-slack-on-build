@@ -1,0 +1,26 @@
+name: Notify Slack on Build
+description: A GitHub Action to notify a Slack channel on a successful project build
+author: Ryan Murphy
+inputs:
+  slack-token:
+    description: The Slack token for authenticating your bot account
+    required: true
+  channel:
+    description: The name or ID of the channel to notify
+    required: true
+  status:
+    description: The status of the build
+    required: true
+  url:
+    description: The URL for accessing your deployed project
+    required: true
+  message-id:
+    description: An optional ID referring to a previously created message
+    default: ''
+    required: false
+outputs:
+  message-id:
+    description: The ID that references the created or updated Slack message
+runs:
+  using: node12
+  main: dist/index.js
