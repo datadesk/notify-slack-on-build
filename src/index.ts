@@ -8,11 +8,23 @@ import {
 } from '@slack/web-api';
 
 // local
-import { findChannelId } from './find-channel-id';
+import { findChannelIds } from './find-channel-id';
 import { prepareBlocks } from './prepare-blocks';
 
 // types
+import type { InputOptions } from '@actions/core';
 export type BuildStatus = 'in_progress' | 'error' | 'success';
+
+function getInputAsArray(name: string, options?: InputOptions): string[] {
+  return getInput(name, options)
+    .split('\n')
+    .map((s) => s.trim())
+    .filter((x) => x !== '');
+}
+
+function setOutputAsNewlineDelimited(name: string, values: string[]) {
+  setOutput(name, values.join('\n'));
+}
 
 async function run() {
   try {
@@ -37,60 +49,77 @@ async function run() {
 
     // Inputs
     const token = getInput('slack-token', { required: true });
-    const channelName = getInput('channel-name', { required: false });
-    const channelId = getInput('channel-id', { required: false });
+    const channelName = getInputAsArray('channel-name', { required: false });
+    const channelId = getInputAsArray('channel-id', { required: false });
     const status = getInput('status', { required: true }) as BuildStatus;
     const previewUrl = getInput('url', { required: true });
-    const messageId = getInput('message-id', { required: false });
+    const messageId = getInputAsArray('message-id', { required: false });
 
     // the authenticated Slack client
     const slack = new WebClient(token);
 
-    const channel = Boolean(channelId)
-      ? channelId
-      : await findChannelId({ channelName, slack });
+    // determine whether we're using channel-id
+    const channels =
+      channelId.length > 1
+        ? channelId
+        : await findChannelIds({ channelName, slack });
 
     // whether this is an update run or not
-    const isUpdate = Boolean(messageId);
+    const isUpdate = messageId.length > 1;
 
-    const blocks = prepareBlocks({
-      actor,
-      branch,
-      checkUrl,
-      owner,
-      previewUrl,
-      repo,
-      repoUrl,
-      sha,
-      shaUrl,
-      status,
-    });
-
-    // the notification/fallback text
-    const text = `Project build${
-      isUpdate ? ' update ' : ' '
-    }for ${owner}/${repo}`;
-
-    const payload: ChatUpdateArguments | ChatPostMessageArguments = {
-      blocks,
-      channel,
-      text,
-    };
-
-    let response;
-
-    if (isUpdate) {
-      payload.ts = messageId;
-      payload.as_user = true;
-      response = await slack.chat.update(payload as ChatUpdateArguments);
-    } else {
-      response = await slack.chat.postMessage(
-        payload as ChatPostMessageArguments
+    if (isUpdate && channels.length !== messageId.length) {
+      throw new Error(
+        'There must be the same number of channel IDs and message IDs during an update run.'
       );
     }
 
-    setOutput('message-id', response.ts as string);
-    setOutput('channel-id', channel as string);
+    // track generated messageIds
+    const messageIds: string[] = [];
+
+    for (let idx = 0; idx < channels.length; idx++) {
+      const channel = channels[idx];
+
+      const blocks = prepareBlocks({
+        actor,
+        branch,
+        checkUrl,
+        owner,
+        previewUrl,
+        repo,
+        repoUrl,
+        sha,
+        shaUrl,
+        status,
+      });
+
+      // the notification/fallback text
+      const text = `Project build${
+        isUpdate ? ' update ' : ' '
+      }for ${owner}/${repo}`;
+
+      const payload: ChatUpdateArguments | ChatPostMessageArguments = {
+        blocks,
+        channel,
+        text,
+      };
+
+      let response;
+
+      if (isUpdate) {
+        payload.ts = messageId[idx];
+        payload.as_user = true;
+        response = await slack.chat.update(payload as ChatUpdateArguments);
+      } else {
+        response = await slack.chat.postMessage(
+          payload as ChatPostMessageArguments
+        );
+      }
+
+      messageIds[idx] = response.ts;
+    }
+
+    setOutputAsNewlineDelimited('message-id', messageIds);
+    setOutputAsNewlineDelimited('channel-id', channels);
   } catch (e) {
     error(e);
     setFailed(e.message);

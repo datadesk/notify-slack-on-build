@@ -1,20 +1,31 @@
 // types
-import type { WebClient, ConversationsListArguments } from '@slack/web-api';
+import type { WebClient } from '@slack/web-api';
 
 interface Channel {
   id: string;
   name: string;
 }
 
-export async function findChannelId({
+export async function findChannelIds({
   channelName,
   slack,
 }: {
-  channelName: string;
+  channelName: string[];
   slack: WebClient;
 }) {
   // peel off any identifiers
-  const name = channelName.replace('#', '').replace('@', '');
+  const names = channelName.map((name) =>
+    name.replace('#', '').replace('@', '')
+  );
+
+  // how many to search for
+  const numberToFind = names.length;
+
+  // how many we have found so far, to short circuit
+  let numberFound = 0;
+
+  // track the IDs we've found
+  const channelIds: string[] = [];
 
   // Async iteration is similar to a simple for loop.
   // Use only the first two parameters to get an async iterator.
@@ -23,11 +34,24 @@ export async function findChannelId({
     limit: 200,
     types: 'public_channel,private_channel',
   })) {
-    // inspect each channel and see if the name matches
+    // inspect each channel and see if the name has a match
     for (const channel of page.channels as Channel[]) {
-      if (channel.name === name) {
-        return channel.id;
+      const index = names.indexOf(channel.name);
+
+      // we found one
+      if (index > -1) {
+        channelIds[index] = channel.id;
+        numberFound++;
+
+        // we found them all! stop here.
+        if (numberToFind === numberFound) {
+          return channelIds;
+        }
       }
     }
   }
+
+  throw new Error(
+    "Unable to find all input channels to notify. Make sure each channel's name is correct. If you are trying to use a private channel, the Slack bot will need to be invited to the channel first."
+  );
 }

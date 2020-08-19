@@ -8233,9 +8233,15 @@ var github = __webpack_require__(469);
 var dist = __webpack_require__(114);
 
 // CONCATENATED MODULE: ./src/find-channel-id.ts
-async function findChannelId({ channelName, slack, }) {
+async function findChannelIds({ channelName, slack, }) {
     // peel off any identifiers
-    const name = channelName.replace('#', '').replace('@', '');
+    const names = channelName.map((name) => name.replace('#', '').replace('@', ''));
+    // how many to search for
+    const numberToFind = names.length;
+    // how many we have found so far, to short circuit
+    let numberFound = 0;
+    // track the IDs we've found
+    const channelIds = [];
     // Async iteration is similar to a simple for loop.
     // Use only the first two parameters to get an async iterator.
     for await (const page of slack.paginate('conversations.list', {
@@ -8243,13 +8249,21 @@ async function findChannelId({ channelName, slack, }) {
         limit: 200,
         types: 'public_channel,private_channel',
     })) {
-        // inspect each channel and see if the name matches
+        // inspect each channel and see if the name has a match
         for (const channel of page.channels) {
-            if (channel.name === name) {
-                return channel.id;
+            const index = names.indexOf(channel.name);
+            // we found one
+            if (index > -1) {
+                channelIds[index] = channel.id;
+                numberFound++;
+                // we found them all! stop here.
+                if (numberToFind === numberFound) {
+                    return channelIds;
+                }
             }
         }
     }
+    throw new Error("Unable to find all input channels to notify. Make sure each channel's name is correct. If you are trying to use a private channel, the Slack bot will need to be invited to the channel first.");
 }
 
 // CONCATENATED MODULE: ./src/prepare-blocks.ts
@@ -8321,6 +8335,15 @@ function prepareBlocks({ actor, branch, checkUrl, owner, previewUrl, repo, repoU
 // local
 
 
+function getInputAsArray(name, options) {
+    return Object(core.getInput)(name, options)
+        .split('\n')
+        .map((s) => s.trim())
+        .filter((x) => x !== '');
+}
+function setOutputAsNewlineDelimited(name, values) {
+    Object(core.setOutput)(name, values.join('\n'));
+}
 async function run() {
     try {
         // The commit SHA that triggered this run
@@ -8338,48 +8361,58 @@ async function run() {
         const branch = parts[parts.length - 1];
         // Inputs
         const token = Object(core.getInput)('slack-token', { required: true });
-        const channelName = Object(core.getInput)('channel-name', { required: false });
-        const channelId = Object(core.getInput)('channel-id', { required: false });
+        const channelName = getInputAsArray('channel-name', { required: false });
+        const channelId = getInputAsArray('channel-id', { required: false });
         const status = Object(core.getInput)('status', { required: true });
         const previewUrl = Object(core.getInput)('url', { required: true });
-        const messageId = Object(core.getInput)('message-id', { required: false });
+        const messageId = getInputAsArray('message-id', { required: false });
         // the authenticated Slack client
         const slack = new dist.WebClient(token);
-        const channel = Boolean(channelId)
+        // determine whether we're using channel-id
+        const channels = channelId.length > 1
             ? channelId
-            : await findChannelId({ channelName, slack });
+            : await findChannelIds({ channelName, slack });
         // whether this is an update run or not
-        const isUpdate = Boolean(messageId);
-        const blocks = prepareBlocks({
-            actor,
-            branch,
-            checkUrl,
-            owner,
-            previewUrl,
-            repo,
-            repoUrl,
-            sha,
-            shaUrl,
-            status,
-        });
-        // the notification/fallback text
-        const text = `Project build${isUpdate ? ' update ' : ' '}for ${owner}/${repo}`;
-        const payload = {
-            blocks,
-            channel,
-            text,
-        };
-        let response;
-        if (isUpdate) {
-            payload.ts = messageId;
-            payload.as_user = true;
-            response = await slack.chat.update(payload);
+        const isUpdate = messageId.length > 1;
+        if (isUpdate && channels.length !== messageId.length) {
+            throw new Error('There must be the same number of channel IDs and message IDs during an update run.');
         }
-        else {
-            response = await slack.chat.postMessage(payload);
+        // track generated messageIds
+        const messageIds = [];
+        for (let idx = 0; idx < channels.length; idx++) {
+            const channel = channels[idx];
+            const blocks = prepareBlocks({
+                actor,
+                branch,
+                checkUrl,
+                owner,
+                previewUrl,
+                repo,
+                repoUrl,
+                sha,
+                shaUrl,
+                status,
+            });
+            // the notification/fallback text
+            const text = `Project build${isUpdate ? ' update ' : ' '}for ${owner}/${repo}`;
+            const payload = {
+                blocks,
+                channel,
+                text,
+            };
+            let response;
+            if (isUpdate) {
+                payload.ts = messageId[idx];
+                payload.as_user = true;
+                response = await slack.chat.update(payload);
+            }
+            else {
+                response = await slack.chat.postMessage(payload);
+            }
+            messageIds[idx] = response.ts;
         }
-        Object(core.setOutput)('message-id', response.ts);
-        Object(core.setOutput)('channel-id', channel);
+        setOutputAsNewlineDelimited('message-id', messageIds);
+        setOutputAsNewlineDelimited('channel-id', channels);
     }
     catch (e) {
         Object(core.error)(e);
