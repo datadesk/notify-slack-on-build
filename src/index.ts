@@ -37,8 +37,8 @@ async function run() {
 
     // Inputs
     const token = getInput('slack-token', { required: true });
-    const channelName = getInput('channel-name', { required: true });
-    const channelId = getInput('channel-id', { required: true });
+    const channelName = getInput('channel-name', { required: false });
+    const channelId = getInput('channel-id', { required: false });
     const status = getInput('status', { required: true }) as BuildStatus;
     const previewUrl = getInput('url', { required: true });
     const messageId = getInput('message-id', { required: false });

@@ -8338,8 +8338,8 @@ async function run() {
         const branch = parts[parts.length - 1];
         // Inputs
         const token = Object(core.getInput)('slack-token', { required: true });
-        const channelName = Object(core.getInput)('channel-name', { required: true });
-        const channelId = Object(core.getInput)('channel-id', { required: true });
+        const channelName = Object(core.getInput)('channel-name', { required: false });
+        const channelId = Object(core.getInput)('channel-id', { required: false });
         const status = Object(core.getInput)('status', { required: true });
         const previewUrl = Object(core.getInput)('url', { required: true });
         const messageId = Object(core.getInput)('message-id', { required: false });
