@@ -40,7 +40,7 @@ require('./sourcemap-register.js');module.exports =
 /******/ 	// the startup function
 /******/ 	function startup() {
 /******/ 		// Load entry module and return exports
-/******/ 		return __webpack_require__(801);
+/******/ 		return __webpack_require__(672);
 /******/ 	};
 /******/ 	// initialize runtime
 /******/ 	runtime(__webpack_require__);
@@ -8217,6 +8217,180 @@ module.exports = function httpAdapter(config) {
 
 /***/ }),
 
+/***/ 672:
+/***/ (function(__unusedmodule, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+
+// EXTERNAL MODULE: ./node_modules/@actions/core/lib/core.js
+var core = __webpack_require__(470);
+
+// EXTERNAL MODULE: ./node_modules/@actions/github/lib/github.js
+var github = __webpack_require__(469);
+
+// EXTERNAL MODULE: ./node_modules/@slack/web-api/dist/index.js
+var dist = __webpack_require__(114);
+
+// CONCATENATED MODULE: ./src/find-channel-id.ts
+async function findChannelId({ channelName, slack, }) {
+    // peel off any identifiers
+    const name = channelName.replace('#', '').replace('@', '');
+    // Async iteration is similar to a simple for loop.
+    // Use only the first two parameters to get an async iterator.
+    for await (const page of slack.paginate('conversations.list', {
+        exclude_archived: true,
+        limit: 200,
+        types: 'public_channel,private_channel',
+    })) {
+        // inspect each channel and see if the name matches
+        for (const channel of page.channels) {
+            if (channel.name === name) {
+                return channel.id;
+            }
+        }
+    }
+}
+
+// CONCATENATED MODULE: ./src/prepare-blocks.ts
+function prepareBlocks({ actor, branch, checkUrl, owner, previewUrl, repo, repoUrl, sha, shaUrl, status, }) {
+    let text;
+    let url;
+    let buttonText;
+    let style;
+    switch (status) {
+        case 'in_progress':
+            text = ':construction: This commit is now building and deploying.';
+            url = checkUrl;
+            buttonText = 'View build progress';
+            break;
+        case 'error':
+            text = ":no_entry: Something went wrong and this commit's build failed.";
+            url = checkUrl;
+            buttonText = 'View build logs';
+            style = 'danger';
+            break;
+        case 'success':
+            text =
+                ":white_check_mark: This commit's build and deploy was successful!";
+            url = previewUrl;
+            buttonText = 'Open preview';
+            style = 'primary';
+            break;
+    }
+    const accessory = {
+        type: 'button',
+        url,
+        text: {
+            type: 'plain_text',
+            text: buttonText,
+        },
+    };
+    if (style) {
+        accessory['style'] = style;
+    }
+    return [
+        {
+            type: 'section',
+            text: { type: 'plain_text', text },
+            fields: [
+                { type: 'mrkdwn', text: `*Repo*\n<${repoUrl}|${owner}/${repo}>` },
+                {
+                    type: 'mrkdwn',
+                    text: `*Branch*\n${branch}`,
+                },
+                {
+                    type: 'mrkdwn',
+                    text: `*Commit*\n<${shaUrl}|\`${sha.slice(0, 8)}\`>`,
+                },
+                {
+                    type: 'mrkdwn',
+                    text: `*User*\n${actor}`,
+                },
+            ],
+            accessory,
+        },
+    ];
+}
+
+// CONCATENATED MODULE: ./src/index.ts
+// packages
+
+
+
+// local
+
+
+async function run() {
+    try {
+        // The commit SHA that triggered this run
+        const { actor, ref, sha } = github.context;
+        // The owner and repo names of this repository
+        const { owner, repo } = github.context.repo;
+        // the URL of the repo
+        const repoUrl = `https://github.com/${owner}/${repo}`;
+        // the URL to the commit
+        const shaUrl = `${repoUrl}/commit/${sha}`;
+        // The prepared URL to the workflow's check page
+        const checkUrl = `${shaUrl}/checks`;
+        // pull branch name off the ref
+        const parts = ref.split('/');
+        const branch = parts[parts.length - 1];
+        // Inputs
+        const token = Object(core.getInput)('slack-token', { required: true });
+        const channelName = Object(core.getInput)('channel-name', { required: true });
+        const channelId = Object(core.getInput)('channel-id', { required: true });
+        const status = Object(core.getInput)('status', { required: true });
+        const previewUrl = Object(core.getInput)('url', { required: true });
+        const messageId = Object(core.getInput)('message-id', { required: false });
+        // the authenticated Slack client
+        const slack = new dist.WebClient(token);
+        const channel = Boolean(channelId)
+            ? channelId
+            : await findChannelId({ channelName, slack });
+        // whether this is an update run or not
+        const isUpdate = Boolean(messageId);
+        const blocks = prepareBlocks({
+            actor,
+            branch,
+            checkUrl,
+            owner,
+            previewUrl,
+            repo,
+            repoUrl,
+            sha,
+            shaUrl,
+            status,
+        });
+        // the notification/fallback text
+        const text = `Project build${isUpdate ? ' update ' : ' '}for ${owner}/${repo}`;
+        const payload = {
+            blocks,
+            channel,
+            text,
+        };
+        let response;
+        if (isUpdate) {
+            payload.ts = messageId;
+            payload.as_user = true;
+            response = await slack.chat.update(payload);
+        }
+        else {
+            response = await slack.chat.postMessage(payload);
+        }
+        Object(core.setOutput)('message-id', response.ts);
+        Object(core.setOutput)('channel-id', channel);
+    }
+    catch (e) {
+        Object(core.error)(e);
+        Object(core.setFailed)(e.message);
+    }
+}
+run();
+
+
+/***/ }),
+
 /***/ 688:
 /***/ (function(module, __unusedexports, __webpack_require__) {
 
@@ -9472,154 +9646,6 @@ function getUserAgent() {
 
 exports.getUserAgent = getUserAgent;
 //# sourceMappingURL=index.js.map
-
-
-/***/ }),
-
-/***/ 801:
-/***/ (function(__unusedmodule, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-
-// EXTERNAL MODULE: ./node_modules/@actions/core/lib/core.js
-var core = __webpack_require__(470);
-
-// EXTERNAL MODULE: ./node_modules/@actions/github/lib/github.js
-var github = __webpack_require__(469);
-
-// EXTERNAL MODULE: ./node_modules/@slack/web-api/dist/index.js
-var dist = __webpack_require__(114);
-
-// CONCATENATED MODULE: ./src/prepare-blocks.ts
-function prepareBlocks({ actor, branch, checkUrl, owner, previewUrl, repo, repoUrl, sha, shaUrl, status, }) {
-    let text;
-    let url;
-    let buttonText;
-    let style;
-    switch (status) {
-        case 'in_progress':
-            text = ':construction: This commit is now building and deploying.';
-            url = checkUrl;
-            buttonText = 'View build progress';
-            break;
-        case 'error':
-            text = ":no_entry: Something went wrong and this commit's build failed.";
-            url = checkUrl;
-            buttonText = 'View build logs';
-            style = 'danger';
-            break;
-        case 'success':
-            text =
-                ":white_check_mark: This commit's build and deploy was successful!";
-            url = previewUrl;
-            buttonText = 'Open preview';
-            style = 'primary';
-            break;
-    }
-    const accessory = {
-        type: 'button',
-        url,
-        text: {
-            type: 'plain_text',
-            text: buttonText,
-        },
-    };
-    if (style) {
-        accessory['style'] = style;
-    }
-    return [
-        {
-            type: 'section',
-            text: { type: 'plain_text', text },
-            fields: [
-                { type: 'mrkdwn', text: `*Repo*\n<${repoUrl}|${owner}/${repo}>` },
-                {
-                    type: 'mrkdwn',
-                    text: `*Branch*\n${branch}`,
-                },
-                {
-                    type: 'mrkdwn',
-                    text: `*Commit*\n<${shaUrl}|\`${sha.slice(0, 8)}\`>`,
-                },
-                {
-                    type: 'mrkdwn',
-                    text: `*User*\n${actor}`,
-                },
-            ],
-            accessory,
-        },
-    ];
-}
-
-// CONCATENATED MODULE: ./src/index.ts
-// packages
-
-
-
-// local
-
-async function run() {
-    try {
-        // The commit SHA that triggered this run
-        const { actor, ref, sha } = github.context;
-        // The owner and repo names of this repository
-        const { owner, repo } = github.context.repo;
-        // the URL of the repo
-        const repoUrl = `https://github.com/${owner}/${repo}`;
-        // the URL to the commit
-        const shaUrl = `${repoUrl}/commit/${sha}`;
-        // The prepared URL to the workflow's check page
-        const checkUrl = `${shaUrl}/checks`;
-        // pull branch name off the ref
-        const parts = ref.split('/');
-        const branch = parts[parts.length - 1];
-        // Inputs
-        const token = Object(core.getInput)('slack-token', { required: true });
-        const channel = Object(core.getInput)('channel', { required: true });
-        const status = Object(core.getInput)('status', { required: true });
-        const previewUrl = Object(core.getInput)('url', { required: true });
-        const messageId = Object(core.getInput)('message-id', { required: false });
-        // the authenticated Slack client
-        const slack = new dist.WebClient(token);
-        // whether this is an update run or not
-        const isUpdate = Boolean(messageId);
-        const blocks = prepareBlocks({
-            actor,
-            branch,
-            checkUrl,
-            owner,
-            previewUrl,
-            repo,
-            repoUrl,
-            sha,
-            shaUrl,
-            status,
-        });
-        // the notification/fallback text
-        const text = `Project build${isUpdate ? ' update ' : ' '}for ${owner}/${repo}`;
-        const payload = {
-            blocks,
-            channel,
-            text,
-        };
-        let response;
-        if (isUpdate) {
-            payload.ts = messageId;
-            payload.as_user = true;
-            response = await slack.chat.update(payload);
-        }
-        else {
-            response = await slack.chat.postMessage(payload);
-        }
-        Object(core.setOutput)('message-id', response.ts);
-    }
-    catch (e) {
-        Object(core.error)(e);
-        Object(core.setFailed)(e.message);
-    }
-}
-run();
 
 
 /***/ }),

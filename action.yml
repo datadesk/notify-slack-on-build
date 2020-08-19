@@ -5,9 +5,14 @@ inputs:
   slack-token:
     description: The Slack token for authenticating your bot account
     required: true
-  channel:
-    description: The name or ID of the channel to notify
-    required: true
+  channel-name:
+    description: The name of the channel to notify (channel-id is preferred)
+    default: ""
+    required: false
+  channel-id:
+    description: The ID of the channel to notify
+    default: ""
+    required: false
   status:
     description: The status of the build
     required: true
@@ -16,11 +21,13 @@ inputs:
     required: true
   message-id:
     description: An optional ID referring to a previously created message
-    default: ''
+    default: ""
     required: false
 outputs:
   message-id:
     description: The ID that references the created or updated Slack message
+  channel-id:
+    description: The ID of the channel receiving the message - if channel-id is provided as an input this will be identical, otherwise it is the ID that was found based on channel-name
 runs:
   using: node12
   main: dist/index.js
