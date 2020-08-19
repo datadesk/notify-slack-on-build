@@ -52,6 +52,6 @@ export async function findChannelIds({
   }
 
   throw new Error(
-    "Unable to find all input channels to notify. Make sure each channel's name is correct. If you are trying to use a private channel, the Slack bot will need to be invited to the channel first."
+    "Unable to find all input channels to notify. Make sure each channel's name is correct and that the Slack bot has been invited to each channel."
   );
 }
