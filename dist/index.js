@@ -8263,7 +8263,7 @@ async function findChannelIds({ channelName, slack, }) {
             }
         }
     }
-    throw new Error("Unable to find all input channels to notify. Make sure each channel's name is correct. If you are trying to use a private channel, the Slack bot will need to be invited to the channel first.");
+    throw new Error("Unable to find all input channels to notify. Make sure each channel's name is correct. If you are trying to use a private channel the Slack bot will need to be invited first.");
 }
 
 // CONCATENATED MODULE: ./src/prepare-blocks.ts
