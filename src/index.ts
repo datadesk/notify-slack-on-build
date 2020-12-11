@@ -55,6 +55,7 @@ async function run() {
     const channelName = getInputAsArray('channel-name', { required: false });
     const channelId = getInputAsArray('channel-id', { required: false });
     const status = getInput('status', { required: true }) as BuildStatus;
+    const statusText = getInput('status-text', { required: false });
     const previewUrl = getInput('url', { required: true });
     const messageId = getInputAsArray('message-id', { required: false });
 
@@ -94,6 +95,7 @@ async function run() {
         sha,
         shaUrl,
         status,
+        statusText,
       });
 
       // the notification/fallback text

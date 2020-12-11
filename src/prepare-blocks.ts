@@ -14,6 +14,7 @@ export function prepareBlocks({
   sha,
   shaUrl,
   status,
+  statusText,
 }: {
   actor: string;
   branch: string;
@@ -26,6 +27,7 @@ export function prepareBlocks({
   sha: string;
   shaUrl: string;
   status: BuildStatus;
+  statusText: string;
 }): [SectionBlock] {
   let text: string;
   let url: string;
@@ -52,6 +54,11 @@ export function prepareBlocks({
       buttonText = 'Open preview';
       style = 'primary';
       break;
+  }
+
+  // if a custom "status-text" was provided, override what was selected above
+  if (statusText) {
+    text = statusText;
   }
 
   const accessory = {

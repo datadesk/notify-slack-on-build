@@ -16,6 +16,9 @@ inputs:
   status:
     description: The status of the build
     required: true
+  status-text:
+    description: Optional customized text describing the status
+    required: false
   url:
     description: The URL for accessing your deployed project
     required: true
