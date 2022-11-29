@@ -107,6 +107,8 @@ async function run() {
         blocks,
         channel,
         text,
+        unfurl_links: false,
+        unfurl_media: false,
       };
 
       let response;
