@@ -1,6 +1,6 @@
 # notify-slack-on-build
 
-Post a message to Slack with the latest status of a [`baker`](https://github.com/datadesk/baker) page deployment
+A GitHub Action that posts a message to Slack with the latest status of a [`baker`](https://github.com/datadesk/baker) page deployment
 
 ## Configuration
 
