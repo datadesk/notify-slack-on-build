@@ -10,8 +10,8 @@ Once you have a bot token with the proper permissions, you should make a channel
 
 secret|description
 :-----|:----------
-BAKER_BOT_SLACK_TOKEN|Your bot's secret API key, found in the OAuth section of its configuration panel
-BAKER_BOT_SLACK_CHANNEL_NAME|The name of the Slack channel where your bot is authorized to post
+`BAKER_BOT_SLACK_TOKEN`|Your bot's secret API key, found in the OAuth section of its configuration panel
+`BAKER_BOT_SLACK_CHANNEL_NAME`|The name of the Slack channel where your bot is authorized to post
 
 ## Basic usage
 
