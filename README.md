@@ -36,7 +36,7 @@ steps:
     url: https://yourdomain.com/your-slug/
 
 # Build your `baker` page and whatever else you'd like to do, like linting and deployment
--  run: npm run build
+- run: npm run build
 
 # Send final Slack notification
 - name: Update Slack notification (success)
