@@ -79,16 +79,14 @@ export function prepareBlocks({
       type: 'section',
       text: { type: 'plain_text', text },
       fields: [
-        { type: 'mrkdwn', text: `*Repo*\n<${repoUrl}|${owner}/${repo}>`, unfurl_links: false, },
+        { type: 'mrkdwn', text: `*Repo*\n<${repoUrl}|${owner}/${repo}>`, },
         {
           type: 'mrkdwn',
           text: `*Branch*\n<${branchUrl}|\`${branch}\`>`,
-          unfurl_links: false,
         },
         {
           type: 'mrkdwn',
           text: `*Commit*\n<${shaUrl}|\`${sha.slice(0, 8)}\`>`,
-          unfurl_links: false,
         },
         {
           type: 'mrkdwn',
