@@ -4,7 +4,7 @@ A GitHub Action that posts a message to Slack with the latest status of a [`bake
 
 ## Configuration
 
-Before you can use this action, you need to create and install a Slack bot application with "OAuth scope" permissions that allow it to write messages and list channels. Slack's documentation includes [a guide you can follow](https://slack.com/help/articles/115005265703-Create-a-bot-for-your-workspace). As of this writing, the bot requires `channels:join`, `channels:read`, `chat:write` and `groups:read` scoped. 
+Before you can use this action, you need to create and install a Slack bot application with "OAuth scope" permissions that allow it to write messages and list channels. Slack's documentation includes [a guide you can follow](https://slack.com/help/articles/115005265703-Create-a-bot-for-your-workspace). As of this writing, the bot requires `channels:join`, `channels:read`, `chat:write` and `groups:read` scopes. 
 
 Once you have a bot token with the proper permissions, you should make a channel for it to post into and ensure that it is invited to join. Then you need to edit your repository's settings and add two encrypted secrets that the action will use to post as the bot. GitHub has [a guide on how to do that](https://docs.github.com/en/actions/security-guides/encrypted-secrets). They are:
 
