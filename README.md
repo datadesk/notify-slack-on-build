@@ -28,7 +28,7 @@ steps:
 # Send first Slack notification
 - id: slack
   name: Create Slack notification
-  uses: datadesk/notify-slack-on-build@v2
+  uses: datadesk/notify-slack-on-build@v3
   with:
     slack-token: ${{ secrets.BAKER_BOT_SLACK_TOKEN }}
     channel-name: ${{ secrets.BAKER_BOT_SLACK_CHANNEL_NAME }}
@@ -41,7 +41,7 @@ steps:
 # Send final Slack notification
 - name: Update Slack notification (success)
   if: success()
-  uses: datadesk/notify-slack-on-build@v2
+  uses: datadesk/notify-slack-on-build@v3
   with:
     slack-token: ${{ secrets.BAKER_BOT_SLACK_TOKEN }}
     channel-id: ${{ steps.slack.outputs.channel-id }}
@@ -51,7 +51,7 @@ steps:
 
 - name: Update Slack notification (failure)
   if: failure()
-  uses: datadesk/notify-slack-on-build@v2
+  uses: datadesk/notify-slack-on-build@v3
   with:
    slack-token: ${{ secrets.BAKER_BOT_SLACK_TOKEN }}
    channel-id: ${{ steps.slack.outputs.channel-id }}
@@ -59,4 +59,14 @@ steps:
    url: https://yourdomain.com/your-slug/
    message-id: ${{ steps.slack.outputs.message-id }}
 ```
+
+## Releasing
+
+Releasing a new version requires three steps. After you finish making your edits to the `src` directory, you should compile the final distribution in `dist/`.
+
+```bash
+npm run package
+```
+
+Then update the examples in the README to point to the version number you plan to release. Finally, issue a [new GitHub release](https://github.com/datadesk/notify-slack-on-build/releases) with that same version name.
 
